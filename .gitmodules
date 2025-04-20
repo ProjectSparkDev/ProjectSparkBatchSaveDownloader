@@ -1,0 +1,3 @@
+[submodule "xbcsmgr"]
+	path = xbcsmgr
+	url = https://github.com/ProjectSparkDev/xbcsmgr.git
