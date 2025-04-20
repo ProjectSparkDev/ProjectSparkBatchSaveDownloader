@@ -36,7 +36,9 @@
             label1 = new Label();
             button1 = new Button();
             progressBar = new ProgressBar();
+            pictureBox2 = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             SuspendLayout();
             // 
             // DownloadBtn
@@ -110,6 +112,18 @@
             progressBar.Style = ProgressBarStyle.Continuous;
             progressBar.TabIndex = 7;
             // 
+            // pictureBox2
+            // 
+            pictureBox2.Cursor = Cursors.Hand;
+            pictureBox2.Image = (Image)resources.GetObject("pictureBox2.Image");
+            pictureBox2.Location = new Point(308, 365);
+            pictureBox2.Name = "pictureBox2";
+            pictureBox2.Size = new Size(75, 73);
+            pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox2.TabIndex = 8;
+            pictureBox2.TabStop = false;
+            pictureBox2.Click += pictureBox2_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -122,13 +136,16 @@
             Controls.Add(DownloadBtn);
             Controls.Add(pictureBox1);
             Controls.Add(label1);
+            Controls.Add(pictureBox2);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximumSize = new Size(500, 500);
             MinimumSize = new Size(500, 500);
             Name = "MainForm";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Project spark save downloader";
             Shown += MainForm_Shown;
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -141,5 +158,6 @@
         private Label label1;
         private Button button1;
         private ProgressBar progressBar;
+        private PictureBox pictureBox2;
     }
 }

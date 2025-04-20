@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 
 namespace PSBSD
@@ -26,9 +27,9 @@ namespace PSBSD
                     Tools.SelectFolder();
                     return;
                 }
-                // do the download here
                 Tools.Log("Starting...");
                 await Tools.Download();
+                MessageBox.Show(Config.FinalMessage, "thank you");
             }
             else
             {
@@ -123,5 +124,13 @@ namespace PSBSD
             DownloadBtn.Enabled = true;
         }
 
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://discord.gg/zGGpFp8fSm",
+                UseShellExecute = true
+            });
+        }
     }
 }

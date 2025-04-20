@@ -16,8 +16,10 @@ namespace PSBSD
         internal static readonly string PackageFamilyName = "Microsoft.ProjectSpark-Dakota_8wekyb3d8bbwe";
         internal static string UserToken { get; set; }
         internal static string DeviceToken { get; set; }
+        public static readonly string FinalMessage = "Thank you for using our app.\n\nfor the sake of preservation please consider sharing/donating your worlds and downloaded worlds with us at sparkdev discord\nwe are trying to launch a preservation and archival project.\nclick on the discord icon for a invite.";
+
         internal static readonly DateTime LaunchDatetime = DateTime.Now;
-        internal static readonly string Disclaimer = "DISCLAIME:\n-I understand that this software connects to Xbox live REST API\n-I understand that the credentials are taken from the Xbox app\n-and i understand that running this program multiple times a day can get me rate limited and potentially banned";
+        internal static readonly string Disclaimer = "DISCLAIMER:\n* I understand that this software connects to Xbox live REST API and beside that no data is collected or shared.\n* I understand that the credentials are taken from the Xbox app and login details are not necesary\n* and i understand that running this program multiple times a in an hour has the chance to get me rate limited and potentially banned.\n* i understand that developer is not responsible for my misuse";
         internal static string OutputPath = "";
     }
     internal class Tools
@@ -32,7 +34,7 @@ namespace PSBSD
             DialogResult result = dialog.ShowDialog();
             if (result == DialogResult.OK)
             {
-                
+
                 if (Directory.EnumerateFileSystemEntries(dialog.SelectedPath).Any())
                 {
                     _ = MessageBox.Show("Please select a Empty folder", "ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
