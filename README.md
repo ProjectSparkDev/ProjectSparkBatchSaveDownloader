@@ -1,7 +1,6 @@
 # Project Spark Batch Save Downloader 
 a program to connect to xbox live and download your saves of the game of project spark
 
-[![.NET Core Desktop](https://github.com/ProjectSparkDev/ProjectSparkBatchSaveDownloader/actions/workflows/dotnet-desktop.yml/badge.svg)](https://github.com/ProjectSparkDev/ProjectSparkBatchSaveDownloader/actions/workflows/dotnet-desktop.yml)
 
 ***
 
