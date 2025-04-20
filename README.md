@@ -24,6 +24,11 @@ Files of Project Spark game are intercompatible between Xbox and PC versions. yo
 6. copy all of the files into `%localappdata%\Packages\Microsoft.Dakota_8wekyb3d8bbwe\LocalState\Dakota`
 7. Enjoy Sparking ✨✨
 
+## How do i support this project?
+this project is purely out of love for the game and is a action in answer to the massive amounts of games and creations soon to be lost forever.
+the best action you can take is to join our [discord server](https://discord.gg/zGGpFp8fSm) and send us your downloaded and created worlds.
+we want to save as much as possible of the history of this game. you can find me in the discord for more information about the future of this project.
+
 for Issues, bugs and questions Please use the [issues](https://github.com/ProjectSparkDev/ProjectSparkBatchSaveDownloader/issues) page or join me on discord at [Sparkdev](https://discord.gg/zGGpFp8fSm) server
 
 ***
