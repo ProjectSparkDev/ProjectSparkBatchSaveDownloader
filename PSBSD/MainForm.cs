@@ -21,10 +21,22 @@ namespace PSBSD
         {
             if (Config.OutputPath != string.Empty)
             {
-                if (Directory.EnumerateFileSystemEntries(Config.OutputPath).Any() || !Directory.Exists(Config.OutputPath))
+                if (Directory.EnumerateFileSystemEntries(Config.OutputPath).Any() )
                 {
-                    _ = MessageBox.Show("Please select a Valid and Empty Output folder first", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
-                    Tools.SelectFolder();
+                    if (File.Exists(Path.Combine(Config.OutputPath, Config.MetaFileName)))
+                    {
+                        Log("partial download detected. Continueing download");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select a Valid and Empty Output folder first", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                        Tools.SelectFolder();
+                        return;
+                    }
+                }
+                if (!Directory.Exists(Config.OutputPath))
+                {
+                    MessageBox.Show("Folder selected doesnt exitst.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
                 Tools.Log("Starting...");
@@ -35,7 +47,7 @@ namespace PSBSD
             }
             else
             {
-                _ = MessageBox.Show("Please select a Output folder first", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                MessageBox.Show("Please select a Output folder first", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                 Tools.SelectFolder();
                 return;
             }
