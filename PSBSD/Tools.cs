@@ -245,10 +245,13 @@ namespace PSBSD
 
             Log("Preparing for download");
             //creating meta files for partial download support
-            using (FileStream fs = new(Path.Combine(Config.OutputPath, Config.MetaFileName), FileMode.CreateNew))
-            using (StreamWriter sw = new StreamWriter(fs))
+            if (!partial)
             {
-                await sw.WriteLineAsync("file to support partial downloads using spark save downloader");
+                using (FileStream fs = new(Path.Combine(Config.OutputPath, Config.MetaFileName), FileMode.CreateNew))
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    await sw.WriteLineAsync("file to support partial downloads using spark save downloader");
+                }
             }
 
             foreach (TitleStorageBlobMetadata blob in _saveData)
