@@ -29,7 +29,9 @@ namespace PSBSD
                 }
                 Tools.Log("Starting...");
                 await Tools.Download();
-                MessageBox.Show(Config.FinalMessage, "thank you");
+                Enableinput();
+                ProgressBarUpdate(0, 100);
+
             }
             else
             {
