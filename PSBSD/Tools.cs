@@ -264,9 +264,18 @@ namespace PSBSD
                 filename = filename.Replace("X", ".");
                 filename = filename.Replace("E", "_");
                 string localpath = string.Join(Path.DirectorySeparatorChar, blob.FileName.Split('/').SkipLast(1));
+                localpath = localpath.Replace("X", ".");
+                localpath = localpath.Replace("E", "_");
                 string fullpath = Path.Combine(Config.OutputPath, localpath);
                 _ = Directory.CreateDirectory(fullpath);
                 string FilePath = Path.Combine(fullpath, filename);
+
+                //ignore txt files
+                if (Path.GetExtension(filename) == ".txt")
+                {
+                    Log("Downloading txt files are currently not supported. skipping");
+                    continue;
+                }
 
                 if (partial)
                 {
