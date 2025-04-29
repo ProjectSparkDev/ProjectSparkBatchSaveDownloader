@@ -13,7 +13,7 @@ Files of Project Spark game are intercompatible between Xbox and PC versions. yo
 
 ### known issues:
 * kinect captures directly taken from xbox wont work in PC but if they are converted into brains or assemblies, they work
-* sometimes, app gets confiused when there are multiple saved credentials with the same name. a guide on how to get the app working is being written while a fix for this issue is found.
+* ~~sometimes, app gets confiused when there are multiple saved credentials with the same name. a guide on how to get the app working is being written while a fix for this issue is found.~~ (this issue is fixed)
 
 ## How to use:
 1. Download the latest release from [github](https://github.com/ProjectSparkDev/ProjectSparkBatchSaveDownloader/releases)
