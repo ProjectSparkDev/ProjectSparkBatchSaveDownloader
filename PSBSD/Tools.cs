@@ -81,68 +81,119 @@ namespace PSBSD
             }
             Downloader.main.Log(s);
         }
-        internal static void LoadXblTokenCredentials()
+        internal static Dictionary<string, string> LoadXblTokenCredentials()
         {
             Dictionary<string, string> currentCredentials = CredentialUtil.EnumerateCredentials();
+            Log($"loaded total of {currentCredentials.Count} credentials");
             Dictionary<string, string> xblCredentials = currentCredentials.Where(k => k.Key.Contains("Xbl|") || (k.Key.Contains("XblGrts|")
                     && k.Key.Contains("Dtoken"))
                     || k.Key.Contains("Utoken"))
                     .ToDictionary(p => p.Key, p => p.Value);
 
-            string PartialCredential = null;
-            foreach (KeyValuePair<string, string> credential in xblCredentials)
+            Log($"filtered {xblCredentials.Count} credentials with the xbox live tags");
+
+            Dictionary<string, string> fulltokens = [];
+
+            foreach (KeyValuePair<string, string> cred in xblCredentials)
             {
-                string json = credential.Value;
-                XboxLiveToken token = null;
                 try
                 {
-                    token = JsonConvert.DeserializeObject<XboxLiveToken>(json);
-                }
-                catch (JsonReaderException)
-                {
-
-                    if (PartialCredential == null)
+                    string[] Properties = cred.Key.Split('|');
+                    //look for headers or ignore
+                    if (Properties.Count() == 9 && Properties.Last() == "JWT")//token is header
                     {
-                        PartialCredential = json;
+                        string headerKey = cred.Key;
+                        string headerValue = cred.Value;
+                        Dictionary<string, string> partials = [];
+                        foreach (KeyValuePair<string, string> others in xblCredentials.Where(k => k.Key != cred.Key))
+                        {
+                            string[] properties = others.Key.Split('|');
+                            if (properties[1] == Properties[1] &&
+                                properties[2] == Properties[2] &&
+                                properties[5] == Properties[5] &&
+                                properties.Count() == 10 &&
+                                properties.Last() != "JWT")
+                            { //partial of the same header
+                                partials.Add(others.Key, others.Value);
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        if (partials.Count() > 0)
+                        {
+                            if (partials.Count() == 1)
+                            {
+                                //merge tokens
+                                headerValue = $"{headerValue}{partials.First().Value}";
+                            }
+                            else
+                            {
+                                Dictionary<int, string> indexes = [];
+                                foreach (KeyValuePair<string, string> partial in partials)
+                                {
+                                    indexes.Add(Convert.ToInt32(partial.Key.Split('|').Last()), partial.Key);
+                                }
+                                for (int i = 0; i < indexes.Count; i++)
+                                {
+                                    headerValue = $"{headerValue}{partials[indexes[i]]}";
+                                }
+                            }
+                        }
+                        fulltokens.Add(headerKey, headerValue);
                     }
                     else
-                    {
-                        try
-                        {
-                            token = JsonConvert.DeserializeObject<XboxLiveToken>(json + PartialCredential);
-                        }
-                        catch (JsonReaderException)
-                        {
-                            try
-                            {
-                                token = JsonConvert.DeserializeObject<XboxLiveToken>(PartialCredential + json);
-                            }
-                            catch (JsonReaderException)
-                            {
-                                PartialCredential = json;
-                                break;
-                            }
-                        }
+                    { //ignore
+                        continue;
                     }
+
                 }
-                if (token != null)
+                catch (IndexOutOfRangeException)
                 {
-                    if (token.TokenData.NotAfter > DateTime.UtcNow)
-                    {
-                        if (credential.Key.Contains("Dtoken"))
-                        {
-                            Config.DeviceToken = token.TokenData.Token;
-                        }
-                        else if (credential.Key.Contains("Utoken"))
-                        {
-                            if (token.TokenData.Token != "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-                            {
-                                Config.UserToken = token.TokenData.Token;
-                            }
-                        }
-                    }
+                    Log($"unsupported Key format: {cred.Key}");
+                }
+                catch (Exception e)
+                {
+                    Error(e);
+                    return null;
                 }
             }
+            Log($"merged tokens successfully. available tokens:({fulltokens.Count})");
+            return fulltokens;
+        }
+        internal static void updateCredentials()
+        {
+            Dictionary<string, string> Credentials = LoadXblTokenCredentials();
+            List<XboxLiveToken> tokens = [];
+            Log("using the first available user. support for multiple users will be added later.");
+            KeyValuePair<string, string> first = Credentials.First();
+            foreach (KeyValuePair<string, string> key in Credentials)
+            {
+                if (key.Key.Split('|')[1] == first.Key.Split('|')[1])
+                {
+                    tokens.Add(JsonConvert.DeserializeObject<XboxLiveToken>(key.Value));
+                }
+            }
+            foreach (XboxLiveToken token in tokens)
+            {
+                if (token.IdentityType == "Dtoken")
+                {
+                    Config.DeviceToken = token.TokenData.Token;
+                    Log($"Token set. type:({token.TokenType}) - data:({token.IdentityType})");
+                }
+                else if (token.IdentityType == "Utoken")
+                {
+                    Config.UserToken = token.TokenData.Token;
+                    Log($"Token set. type:({token.TokenType}) - data:({token.IdentityType})");
+                }
+                else
+                {
+                    Error("invalid token type was used. wrong implementation");
+                    return;
+                }
+            }
+
         }
         internal static async Task AuthenticateXbl()
         {
@@ -166,7 +217,7 @@ namespace PSBSD
             }
             return;
         }
-        internal static async Task<Byte[]> DownloadAtomData(TitleStorageBlobMetadata b)
+        internal static async Task<byte[]> DownloadAtomData(TitleStorageBlobMetadata b)
         {
             TitleStorageAtomMetadataResult downloadAtom = await _storageService.GetBlobAtoms(b.FileName);
             return await _storageService.DownloadAtomAsync(downloadAtom.Atoms["Data"]);
@@ -187,7 +238,6 @@ namespace PSBSD
                 else
                 {
                     Error(new Exception("FOLDER CHOSEN IS NOT EMPTY"));
-                    noerror = false;
                     return;
                 }
             }
@@ -195,19 +245,18 @@ namespace PSBSD
             if (!Directory.Exists(Config.OutputPath))
             {
                 Error(new Exception("FOLDER DOES NOT EXIST"));
-                noerror = false;
                 return;
             }
 
             IList<TitleStorageBlobMetadata> _saveData = [];
 
             Log("Loading Xbox live credentials");
-            LoadXblTokenCredentials();
+            updateCredentials();
+
 
             if (Config.DeviceToken == null || Config.UserToken == null || (Config.UserToken == Config.DeviceToken))
             {
                 Error(new Exception("TOKENS WERE NULL"));
-                noerror = false;
                 return;
             }
 
@@ -219,7 +268,6 @@ namespace PSBSD
             catch (XboxAuthException E)
             {
                 Error(E);
-                noerror = false;
                 return;
             }
             Log("Fetching save data...");
@@ -236,7 +284,6 @@ namespace PSBSD
             catch (Exception e)
             {
                 Error(e);
-                noerror = false;
                 return;
             }
 
@@ -248,11 +295,9 @@ namespace PSBSD
             //creating meta files for partial download support
             if (!partial)
             {
-                using (FileStream fs = new(Path.Combine(Config.OutputPath, Config.MetaFileName), FileMode.CreateNew))
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    await sw.WriteLineAsync("file to support partial downloads using spark save downloader");
-                }
+                using FileStream fs = new(Path.Combine(Config.OutputPath, Config.MetaFileName), FileMode.CreateNew);
+                using StreamWriter sw = new(fs);
+                await sw.WriteLineAsync("file to support partial downloads using spark save downloader");
             }
 
             foreach (TitleStorageBlobMetadata blob in _saveData)
@@ -334,7 +379,7 @@ namespace PSBSD
                             if (again == DialogResult.Yes)
                             {
                                 Log("Loading Xbox live credentials");
-                                LoadXblTokenCredentials();
+                                updateCredentials();
                                 if (Config.DeviceToken == null || Config.UserToken == null || (Config.UserToken == Config.DeviceToken))
                                 {
                                     Error(new Exception("TOKENS WERE NULL"));
@@ -367,18 +412,21 @@ namespace PSBSD
                             }
                         }
                     }
-                    else if (res == DialogResult.No) continue;
-                    else if (res == DialogResult.Cancel) return;
-
+                    else if (res == DialogResult.No)
+                    {
+                        continue;
+                    }
+                    else if (res == DialogResult.Cancel)
+                    {
+                        return;
+                    }
                 }
 
                 try
                 {
                     //saving
-                    using (FileStream fs = new(FilePath, FileMode.CreateNew))
-                    {
-                        await fs.WriteAsync(atomData);
-                    }
+                    using FileStream fs = new(FilePath, FileMode.CreateNew);
+                    await fs.WriteAsync(atomData);
                 }
                 catch (Exception e)
                 {
@@ -393,14 +441,17 @@ namespace PSBSD
             try
             {
                 Log("cleaning up");
-                if (noerror) File.Delete(Path.Combine(Config.OutputPath, Config.MetaFileName));
+                if (noerror)
+                {
+                    File.Delete(Path.Combine(Config.OutputPath, Config.MetaFileName));
+                }
             }
             catch (Exception e)
             {
                 Error(e);
             }
             Log("FINISHED - ENJOY SPARKING!");
-            MessageBox.Show(Config.FinalMessage, "thank you");
+            _ = MessageBox.Show(Config.FinalMessage, "thank you");
             return;
         }
 
