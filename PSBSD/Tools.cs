@@ -247,12 +247,14 @@ namespace PSBSD
             catch (Exception E)
             {
                 Error(E);
+                Log("Download aborted");
                 return;
             }
 
             if (Config.DeviceToken == null || Config.UserToken == null || (Config.UserToken == Config.DeviceToken))
             {
                 Error(" No credentials were found.\nmake sure to log into the xbox app at least once.");
+                Log("Download aborted");
                 return;
             }
 
@@ -264,6 +266,7 @@ namespace PSBSD
             catch (Exception E)
             {
                 Error(E);
+                Log("Download aborted");
                 return;
             }
             Log("Fetching save data...");
@@ -281,6 +284,7 @@ namespace PSBSD
             catch (Exception e)
             {
                 Error(e);
+                Log("Download aborted");
                 return;
             }
 
