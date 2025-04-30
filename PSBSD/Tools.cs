@@ -14,15 +14,14 @@ namespace PSBSD
     internal class Config
     {
         internal static readonly string ServiceId = "d3d00100-7976-472f-a3f7-bc1760d19e14";
+        public static readonly string FinalMessage = "Thank you for using our app.\n\nfor the sake of preservation please consider sharing/donating your worlds and downloaded worlds with us at sparkdev discord\nwe are trying to launch a preservation and archival project.\nclick on the discord icon for a invite.";
+        internal static readonly string Disclaimer = "DISCLAIMER:\n* I understand that this software connects to Xbox live REST API and beside that no data is collected or shared.\n* I understand that the credentials are taken from the Xbox app and login details are not necesary\n* and i understand that running this program multiple times a in an hour has the chance to get me rate limited and potentially banned.\n* i understand that developer is not responsible for my misuse";
         internal static readonly string PackageFamilyName = "Microsoft.ProjectSpark-Dakota_8wekyb3d8bbwe";
+        internal static readonly string MetaFileName = ".partial.spark";
+        internal static readonly DateTime LaunchDatetime = DateTime.Now;
         internal static string UserToken { get; set; }
         internal static string DeviceToken { get; set; }
-        public static readonly string FinalMessage = "Thank you for using our app.\n\nfor the sake of preservation please consider sharing/donating your worlds and downloaded worlds with us at sparkdev discord\nwe are trying to launch a preservation and archival project.\nclick on the discord icon for a invite.";
-
-        internal static readonly DateTime LaunchDatetime = DateTime.Now;
-        internal static readonly string Disclaimer = "DISCLAIMER:\n* I understand that this software connects to Xbox live REST API and beside that no data is collected or shared.\n* I understand that the credentials are taken from the Xbox app and login details are not necesary\n* and i understand that running this program multiple times a in an hour has the chance to get me rate limited and potentially banned.\n* i understand that developer is not responsible for my misuse";
         internal static string OutputPath = "";
-        internal static readonly string MetaFileName = ".partial.spark";
     }
     internal class Tools
     {
@@ -58,13 +57,10 @@ namespace PSBSD
                 return;
             }
         }
-
         public static void Error(Exception ex)
         {
             Log($"Error:{ex.GetType()}\n\n{ex.Message}\n\n{ex.StackTrace}");
             _ = MessageBox.Show($"Error:{ex.GetType()}\n\n{ex.Message}\n\n{ex.StackTrace}", "ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            /*Log("Exiting");
-            Environment.Exit(1);*/
         }
         public static void Error(string s)
         {
@@ -100,7 +96,7 @@ namespace PSBSD
                 {
                     string[] Properties = cred.Key.Split('|');
                     //look for headers or ignore
-                    if (Properties.Count() == 9 && Properties.Last() == "JWT")//token is header
+                    if (Properties.Length == 9 && Properties.Last() == "JWT")//token is header
                     {
                         string headerKey = cred.Key;
                         string headerValue = cred.Value;
@@ -111,7 +107,7 @@ namespace PSBSD
                             if (properties[1] == Properties[1] &&
                                 properties[2] == Properties[2] &&
                                 properties[5] == Properties[5] &&
-                                properties.Count() == 10 &&
+                                properties.Length == 10 &&
                                 properties.Last() != "JWT")
                             { //partial of the same header
                                 partials.Add(others.Key, others.Value);
@@ -121,9 +117,9 @@ namespace PSBSD
                                 continue;
                             }
                         }
-                        if (partials.Count() > 0)
+                        if (partials.Count > 0)
                         {
-                            if (partials.Count() == 1)
+                            if (partials.Count == 1)
                             {
                                 //merge tokens
                                 headerValue = $"{headerValue}{partials.First().Value}";
@@ -162,7 +158,7 @@ namespace PSBSD
             Log($"merged tokens successfully. available tokens:({fulltokens.Count})");
             return fulltokens;
         }
-        internal static void updateCredentials()
+        internal static void UpdateCredentials()
         {
             Dictionary<string, string> Credentials = LoadXblTokenCredentials();
             List<XboxLiveToken> tokens = [];
@@ -170,6 +166,7 @@ namespace PSBSD
             KeyValuePair<string, string> first = Credentials.First();
             foreach (KeyValuePair<string, string> key in Credentials)
             {
+                Log($"valid token id found: ({key.Key.Split('|')[1]})");
                 if (key.Key.Split('|')[1] == first.Key.Split('|')[1])
                 {
                     tokens.Add(JsonConvert.DeserializeObject<XboxLiveToken>(key.Value));
@@ -180,12 +177,12 @@ namespace PSBSD
                 if (token.IdentityType == "Dtoken")
                 {
                     Config.DeviceToken = token.TokenData.Token;
-                    Log($"Token set. type:({token.TokenType}) - data:({token.IdentityType})");
+                    Log($"Token set. type:({token.TokenType}) - Identity:({token.IdentityType})");
                 }
                 else if (token.IdentityType == "Utoken")
                 {
                     Config.UserToken = token.TokenData.Token;
-                    Log($"Token set. type:({token.TokenType}) - data:({token.IdentityType})");
+                    Log($"Token set. type:({token.TokenType}) - Identity:({token.IdentityType})");
                 }
                 else
                 {
@@ -199,15 +196,8 @@ namespace PSBSD
         {
             XboxLiveAuthenticateResponse<XboxLiveDisplayClaims> result;
 
-            try
-            {
-                result = await authenticateService.AuthorizeXsts(Config.UserToken, Config.DeviceToken);
-            }
-            catch (Exception ex)
-            {
-                Error(ex);
-                return;
-            }
+            result = await authenticateService.AuthorizeXsts(Config.UserToken, Config.DeviceToken);
+
             if (result != null)
             {
                 Log($"Authorized as :{result.DisplayClaims.XboxUserIdentity.First().Gamertag}");
@@ -237,26 +227,32 @@ namespace PSBSD
                 }
                 else
                 {
-                    Error(new Exception("FOLDER CHOSEN IS NOT EMPTY"));
+                    Error("FOLDER CHOSEN IS NOT EMPTY\nno previous download was detected. so please select another folder.");
                     return;
                 }
             }
 
             if (!Directory.Exists(Config.OutputPath))
             {
-                Error(new Exception("FOLDER DOES NOT EXIST"));
+                Error("FOLDER DOES NOT EXIST\nwrong folder selected. please try again.");
                 return;
             }
 
-            IList<TitleStorageBlobMetadata> _saveData = [];
 
             Log("Loading Xbox live credentials");
-            updateCredentials();
-
+            try
+            {
+                UpdateCredentials();
+            }
+            catch (Exception E)
+            {
+                Error(E);
+                return;
+            }
 
             if (Config.DeviceToken == null || Config.UserToken == null || (Config.UserToken == Config.DeviceToken))
             {
-                Error(new Exception("TOKENS WERE NULL"));
+                Error(" No credentials were found.\nmake sure to log into the xbox app at least once.");
                 return;
             }
 
@@ -265,12 +261,13 @@ namespace PSBSD
             {
                 await AuthenticateXbl();
             }
-            catch (XboxAuthException E)
+            catch (Exception E)
             {
                 Error(E);
                 return;
             }
             Log("Fetching save data...");
+            IList<TitleStorageBlobMetadata> _saveData;
             try
             {
                 TitleStorageBlobMetadataResult blobMetadataResult = await _storageService.GetBlobMetadata();
@@ -357,13 +354,11 @@ namespace PSBSD
                 }
                 catch (Exception e)
                 {
-                    Log("exception encountered when downloading");
-                    Log(FilePath);
-                    Log(blob.FileName);
+                    Log($"exception encountered when downloading ({FilePath}) - ({blob.FileName})");
                     Error(e);
                     noerror = false;
 
-                    DialogResult res = MessageBox.Show($"downloading {filename} failed due to an xbox authentication issue.\nretry?\n\nyes: retry downloading the same file\nno: skip the file\ncancel: cancel all download", "Download error", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Error);
+                    DialogResult res = MessageBox.Show($"downloading {filename} failed.\nretry?\n\nyes: retry downloading the same file\nno: skip the file\ncancel: cancel all download", "Download error", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Error);
                     if (res == DialogResult.Yes)
                     {
                         bool retry = true;
@@ -373,31 +368,41 @@ namespace PSBSD
                             DialogResult again = DialogResult.Yes;
                             if (!first)
                             {
-                                again = MessageBox.Show("Download failed. try again?", "Download error", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                                again = MessageBox.Show($"downloading {filename} failed again. retry?", "Download error", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                             }
                             first = false;
                             if (again == DialogResult.Yes)
                             {
                                 Log("Loading Xbox live credentials");
-                                updateCredentials();
-                                if (Config.DeviceToken == null || Config.UserToken == null || (Config.UserToken == Config.DeviceToken))
+                                try
                                 {
-                                    Error(new Exception("TOKENS WERE NULL"));
+                                    UpdateCredentials();
+                                }
+                                catch (Exception E)
+                                {
+                                    Error(E);
                                     continue;
                                 }
+
+                                if (Config.DeviceToken == null || Config.UserToken == null || (Config.UserToken == Config.DeviceToken))
+                                {
+                                    Error(" No credentials were found.\nmake sure to log into the xbox app at least once.");
+                                    continue;
+                                }
+
                                 Log("Authenticating...");
                                 try
                                 {
                                     await AuthenticateXbl();
                                 }
-                                catch (XboxAuthException E)
+                                catch (Exception E)
                                 {
                                     Error(E);
                                     continue;
                                 }
                                 try
                                 {
-                                    Log($"Retrying downloading Atom: {filename}");
+                                    Log($"downloading Atom: {filename}");
                                     atomData = await DownloadAtomData(blob);
                                 }
                                 catch (Exception a)
@@ -418,6 +423,7 @@ namespace PSBSD
                     }
                     else if (res == DialogResult.Cancel)
                     {
+                        Log("Canceling download");
                         return;
                     }
                 }
@@ -454,7 +460,5 @@ namespace PSBSD
             _ = MessageBox.Show(Config.FinalMessage, "thank you");
             return;
         }
-
-
     }
 }
