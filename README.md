@@ -1,7 +1,11 @@
 # Project Spark Batch Save Downloader 
 a program to connect to xbox live and download your saves of the game of project spark
 
-
+***
+> [!WARNING]  
+> ## develodevelopment on this project has stopped in favour of the new [save downloader](https://github.com/ProjectSparkDev/SparkXboxSavegameDownloader)
+> ### there will be no more support and no more work done on this repository.
+> after cleanup, this repository soon will be going into archive mode. 
 ***
 
 Files of Project Spark game are intercompatible between Xbox and PC versions. you can Download your saves from Xbox live title storage and copy them to your PC to use localy.
@@ -12,7 +16,7 @@ Files of Project Spark game are intercompatible between Xbox and PC versions. yo
 * A Microsoft Account with Project Spark logged in into xbox app
 
 ### known issues:
-* kinect captures directly taken from xbox wont work in PC but if they are converted into brains or assemblies, they work
+* ~~kinect captures directly taken from xbox wont work in PC but if they are converted into brains or assemblies, they work~~ not an issue with the downloader program. the windows version of spark doesn't support kinect files.
 * ~~sometimes, app gets confiused when there are multiple saved credentials with the same name. a guide on how to get the app working is being written while a fix for this issue is found.~~ (this issue is fixed)
 
 ## How to use:
